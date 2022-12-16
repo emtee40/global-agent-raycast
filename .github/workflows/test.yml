@@ -1,0 +1,25 @@
+name: Build and Text
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: [10, 11, 12, 18]
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.version }}
+      - uses: actions/checkout@3
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test
+      - run: npm run lint
+      - run: NODE_ENV=test npx nyc -- --silent ava --serial
+      - run: npx nyc check-coverage --lines 50

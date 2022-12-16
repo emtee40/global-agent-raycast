@@ -1,23 +1,23 @@
 import { UnexpectedStateError } from "../errors";
 
-export default (url: string) => {
+export default (url: string, httpOrHttps: "HTTP" | "HTTPS") => {
   const urlTokens = new URL(url);
 
   if (urlTokens.search !== "") {
     throw new UnexpectedStateError(
-      "Unsupported `GLOBAL_AGENT.HTTP_PROXY` configuration value: URL must not have query."
+      `Unsupported \`GLOBAL_AGENT.${httpOrHttps}_PROXY\` configuration value: URL must not have query.`
     );
   }
 
   if (urlTokens.hash !== "") {
     throw new UnexpectedStateError(
-      "Unsupported `GLOBAL_AGENT.HTTP_PROXY` configuration value: URL must not have hash."
+      `Unsupported \`GLOBAL_AGENT.${httpOrHttps}_PROXY\` configuration value: URL must not have hash.`
     );
   }
 
-  if (urlTokens.protocol !== "http:") {
+  if (urlTokens.protocol !== "http:" && urlTokens.protocol !== "https:") {
     throw new UnexpectedStateError(
-      'Unsupported `GLOBAL_AGENT.HTTP_PROXY` configuration value: URL protocol must be "http:".'
+      `Unsupported \`GLOBAL_AGENT.${httpOrHttps}_PROXY\` configuration value: URL protocol must be "http:" or "https:".`
     );
   }
 

@@ -12,9 +12,9 @@ test("sets HTTP_PROXY", (t) => {
 test("sets HTTPS_PROXY", (t) => {
   const globalAgentGlobal = createProxyController();
 
-  globalAgentGlobal.HTTPS_PROXY = "http://127.0.0.1";
+  globalAgentGlobal.HTTPS_PROXY = "https://127.0.0.1";
 
-  t.is(globalAgentGlobal.HTTPS_PROXY, "http://127.0.0.1");
+  t.is(globalAgentGlobal.HTTPS_PROXY, "https://127.0.0.1");
 });
 
 test("sets NO_PROXY", (t) => {
@@ -33,5 +33,5 @@ test("throws an error if unknown property is set", (t) => {
     globalAgentGlobal.FOO = "BAR";
   });
 
-  t.is(error.message, 'Cannot set an unmapped property "FOO".');
+  t.is(error?.message, 'Cannot set an unmapped property "FOO".');
 });

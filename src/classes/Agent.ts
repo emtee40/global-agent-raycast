@@ -207,10 +207,7 @@ abstract class Agent {
       // This is not ideal because there is no way to override this setting using `tls` configuration if `NODE_TLS_REJECT_UNAUTHORIZED=0`.
       // However, popular HTTP clients (such as https://github.com/sindresorhus/got) come with pre-configured value for `rejectUnauthorized`,
       // which makes it impossible to override that value globally and respect `rejectUnauthorized` for specific requests only.
-      if (
-        // eslint-disable-next-line node/no-process-env
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED === "0"
-      ) {
+      if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === "0") {
         // @ts-expect-error seems like we are using wrong guard for this change that does not align with secureEndpoint
         connectionConfiguration.tls.rejectUnauthorized = false;
       }

@@ -3,6 +3,7 @@ import Logger from "../Logger";
 import { createGlobalProxyAgent } from "../factories";
 import type { ProxyAgentConfigurationInputType } from "../types";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const globalThis: any = createGlobalThis();
 
 const log = Logger.child({

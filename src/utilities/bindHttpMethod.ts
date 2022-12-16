@@ -3,8 +3,8 @@ import https from "https";
 
 type AgentType = http.Agent | https.Agent;
 
-export default (
-  originalMethod: Function,
+export default <T>(
+  originalMethod: (...args: any[]) => T,
   agent: AgentType,
   forceGlobalAgent: boolean
 ) => {

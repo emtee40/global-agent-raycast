@@ -4,7 +4,7 @@ import type { IncomingMessage, IncomingHttpHeaders } from "http";
 import http from "http";
 import https from "https";
 import AnyProxy, { ProxyServer } from "anyproxy";
-import { serial, before, afterEach, beforeEach } from "ava";
+import test from "ava";
 import axios from "axios";
 import getPort from "get-port";
 import got from "got";
@@ -54,7 +54,7 @@ const getNextPort = (): Promise<number> => {
   });
 };
 
-before(() => {
+test.before(() => {
   if (AnyProxy.utils.certMgr.ifRootCAFileExists()) {
     return;
   }
@@ -68,12 +68,12 @@ before(() => {
   });
 });
 
-beforeEach(() => {
+test.beforeEach(() => {
   http.globalAgent = defaultHttpAgent;
   https.globalAgent = defaultHttpsAgent;
 });
 
-afterEach(() => {
+test.afterEach(() => {
   for (const localProxyServer of localProxyServers) {
     localProxyServer.stop();
   }
@@ -122,7 +122,7 @@ const createHttpResponseResolver = (
 };
 
 const createProxyServer = async (
-  anyproxyRules?: any
+  anyproxyRules?: AnyProxy.RuleModule
 ): Promise<ProxyServerType> => {
   const port = await getNextPort();
 
@@ -175,7 +175,7 @@ const createHttpServer = async (): Promise<HttpServerType> => {
   return localHttpServer;
 };
 
-serial("proxies HTTP request", async (t) => {
+test.serial("proxies HTTP request", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();
@@ -189,34 +189,37 @@ serial("proxies HTTP request", async (t) => {
   t.is(response.body, "OK");
 });
 
-serial("proxies HTTP request with proxy-authorization header", async (t) => {
-  const globalProxyAgent = createGlobalProxyAgent();
+test.serial(
+  "proxies HTTP request with proxy-authorization header",
+  async (t) => {
+    const globalProxyAgent = createGlobalProxyAgent();
 
-  const beforeSendRequest = sinon
-    .stub()
-    .callsFake(anyproxyDefaultRules.beforeSendRequest);
+    const beforeSendRequest = sinon
+      .stub()
+      .callsFake(anyproxyDefaultRules.beforeSendRequest);
 
-  const proxyServer = await createProxyServer({
-    beforeSendRequest,
-  });
+    const proxyServer = await createProxyServer({
+      beforeSendRequest,
+    });
 
-  globalProxyAgent.HTTP_PROXY = "http://foo@127.0.0.1:" + proxyServer.port;
+    globalProxyAgent.HTTP_PROXY = "http://foo@127.0.0.1:" + proxyServer.port;
 
-  const response: HttpResponseType = await new Promise((resolve) => {
-    http.get("http://127.0.0.1", createHttpResponseResolver(resolve));
-  });
+    const response: HttpResponseType = await new Promise((resolve) => {
+      http.get("http://127.0.0.1", createHttpResponseResolver(resolve));
+    });
 
-  t.is(response.body, "OK");
+    t.is(response.body, "OK");
 
-  t.is(
-    beforeSendRequest.firstCall.args[0].requestOptions.headers[
-      "proxy-authorization"
-    ],
-    "Basic Zm9v"
-  );
-});
+    t.is(
+      beforeSendRequest.firstCall.args[0].requestOptions.headers[
+        "proxy-authorization"
+      ],
+      "Basic Zm9v"
+    );
+  }
+);
 
-serial("proxies HTTPS request", async (t) => {
+test.serial("proxies HTTPS request", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();
@@ -230,35 +233,38 @@ serial("proxies HTTPS request", async (t) => {
   t.is(response.body, "OK");
 });
 
-serial("proxies HTTPS request with proxy-authorization header", async (t) => {
-  const globalProxyAgent = createGlobalProxyAgent();
+test.serial(
+  "proxies HTTPS request with proxy-authorization header",
+  async (t) => {
+    const globalProxyAgent = createGlobalProxyAgent();
 
-  const beforeDealHttpsRequest = sinon.stub().callsFake(async () => {
-    return true;
-  });
+    const beforeDealHttpsRequest = sinon.stub().callsFake(async () => {
+      return true;
+    });
 
-  const proxyServer = await createProxyServer({
-    beforeDealHttpsRequest,
-    beforeSendRequest: anyproxyDefaultRules.beforeSendRequest,
-  });
+    const proxyServer = await createProxyServer({
+      beforeDealHttpsRequest,
+      beforeSendRequest: anyproxyDefaultRules.beforeSendRequest,
+    });
 
-  globalProxyAgent.HTTP_PROXY = "http://foo@127.0.0.1:" + proxyServer.port;
+    globalProxyAgent.HTTP_PROXY = "http://foo@127.0.0.1:" + proxyServer.port;
 
-  const response: HttpResponseType = await new Promise((resolve) => {
-    https.get("https://127.0.0.1", {}, createHttpResponseResolver(resolve));
-  });
+    const response: HttpResponseType = await new Promise((resolve) => {
+      https.get("https://127.0.0.1", {}, createHttpResponseResolver(resolve));
+    });
 
-  t.is(response.body, "OK");
+    t.is(response.body, "OK");
 
-  t.is(
-    beforeDealHttpsRequest.firstCall.args[0]._req.headers[
-      "proxy-authorization"
-    ],
-    "Basic Zm9v"
-  );
-});
+    t.is(
+      beforeDealHttpsRequest.firstCall.args[0]._req.headers[
+        "proxy-authorization"
+      ],
+      "Basic Zm9v"
+    );
+  }
+);
 
-serial(
+test.serial(
   "does not produce unhandled rejection when cannot connect to proxy",
   async (t) => {
     const globalProxyAgent = createGlobalProxyAgent();
@@ -271,7 +277,7 @@ serial(
   }
 );
 
-serial("proxies HTTPS request with dedicated proxy", async (t) => {
+test.serial("proxies HTTPS request with dedicated proxy", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();
@@ -285,7 +291,7 @@ serial("proxies HTTPS request with dedicated proxy", async (t) => {
   t.is(response.body, "OK");
 });
 
-serial("ignores dedicated HTTPS proxy for HTTP urls", async (t) => {
+test.serial("ignores dedicated HTTPS proxy for HTTP urls", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();
@@ -300,7 +306,7 @@ serial("ignores dedicated HTTPS proxy for HTTP urls", async (t) => {
   t.is(response.body, "OK");
 });
 
-serial("forwards requests matching NO_PROXY", async (t) => {
+test.serial("forwards requests matching NO_PROXY", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();
@@ -316,7 +322,7 @@ serial("forwards requests matching NO_PROXY", async (t) => {
   t.is(response.body, "DIRECT");
 });
 
-serial("proxies HTTP request (using http.get(host))", async (t) => {
+test.serial("proxies HTTP request (using http.get(host))", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();
@@ -335,7 +341,7 @@ serial("proxies HTTP request (using http.get(host))", async (t) => {
   t.is(response.body, "OK");
 });
 
-serial("proxies HTTP request (using got)", async (t) => {
+test.serial("proxies HTTP request (using got)", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();
@@ -347,7 +353,7 @@ serial("proxies HTTP request (using got)", async (t) => {
   t.is(response.body, "OK");
 });
 
-serial("proxies HTTPS request (using got)", async (t) => {
+test.serial("proxies HTTPS request (using got)", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();
@@ -359,7 +365,7 @@ serial("proxies HTTPS request (using got)", async (t) => {
   t.is(response.body, "OK");
 });
 
-serial("proxies HTTP request (using axios)", async (t) => {
+test.serial("proxies HTTP request (using axios)", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();
@@ -371,7 +377,7 @@ serial("proxies HTTP request (using axios)", async (t) => {
   t.is(response.data, "OK");
 });
 
-serial("proxies HTTPS request (using axios)", async (t) => {
+test.serial("proxies HTTPS request (using axios)", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();
@@ -383,7 +389,7 @@ serial("proxies HTTPS request (using axios)", async (t) => {
   t.is(response.data, "OK");
 });
 
-serial("proxies HTTP request (using request)", async (t) => {
+test.serial("proxies HTTP request (using request)", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();
@@ -401,7 +407,7 @@ serial("proxies HTTP request (using request)", async (t) => {
   t.is(response, "OK");
 });
 
-serial("proxies HTTPS request (using request)", async (t) => {
+test.serial("proxies HTTPS request (using request)", async (t) => {
   const globalProxyAgent = createGlobalProxyAgent();
 
   const proxyServer = await createProxyServer();

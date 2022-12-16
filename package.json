@@ -1,19 +1,21 @@
 {
+  "name": "@raycast/global-agent",
+  "version": "3.0.0",
+  "description": "Global HTTP/HTTPS proxy configurable using environment variables.",
   "author": {
     "email": "gajus@gajus.com",
     "name": "Gajus Kuizinas",
     "url": "http://gajus.com"
   },
-  "ava": {
-    "extensions": [
-      "ts"
-    ],
-    "files": [
-      "test/global-agent/**/*"
-    ],
-    "require": [
-      "ts-node/register/transpile-only"
-    ]
+  "main": "./dist/src/index.js",
+  "typings": "./dist/src/index.d.ts",
+  "engines": {
+    "node": ">=10.0"
+  },
+  "scripts": {
+    "build": "del-cli ./dist && tsc",
+    "lint": "eslint src/ test/",
+    "test": "ava --verbose --serial"
   },
   "dependencies": {
     "boolean": "^3.1.2",
@@ -25,7 +27,6 @@
     "semver": "^7.3.5",
     "serialize-error": "^8.1.0"
   },
-  "description": "Global HTTP/HTTPS proxy configurable using environment variables.",
   "devDependencies": {
     "@ava/babel": "^2.0.0",
     "@babel/cli": "^7.14.8",
@@ -40,15 +41,19 @@
     "@types/request": "^2.48.6",
     "@types/semver": "^7.3.8",
     "@types/sinon": "^10.0.2",
+    "@typescript-eslint/eslint-plugin": "^5.46.1",
+    "@typescript-eslint/parser": "^5.46.1",
     "anyproxy": "^4.1.3",
-    "ava": "^3.15.0",
+    "ava": "^5.1.0",
     "axios": "^0.21.1",
     "babel-plugin-istanbul": "^6.0.0",
     "babel-plugin-transform-export-default-name": "^2.1.0",
     "coveralls": "^3.1.1",
     "del-cli": "^4.0.1",
-    "eslint": "^7.31.0",
-    "eslint-config-canonical": "^26.2.3",
+    "eslint": "^8.29.0",
+    "eslint-config-canonical": "^37.0.3",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "get-port": "^5.1.1",
     "got": "^11.8.2",
     "husky": "^7.0.1",
@@ -58,15 +63,11 @@
     "semantic-release": "^17.4.4",
     "sinon": "^11.1.2",
     "ts-node": "^10.1.0",
-    "typescript": "^4.3.5"
+    "typescript": "^4.9.4"
   },
-  "engines": {
-    "node": ">=10.0"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run lint && npm run test && npm run build"
-    }
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gajus/global-agent"
   },
   "keywords": [
     "http",
@@ -75,22 +76,28 @@
     "agent"
   ],
   "license": "BSD-3-Clause",
-  "main": "./dist/index.js",
-  "name": "global-agent",
+  "files": [
+    "dist/src",
+    "bootstrap.js"
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint && npm run test && npm run build"
+    }
+  },
+  "ava": {
+    "extensions": [
+      "ts"
+    ],
+    "files": [
+      "test/global-agent/**/*"
+    ],
+    "require": [
+      "ts-node/register/transpile-only"
+    ]
+  },
   "nyc": {
     "extends": "@istanbuljs/nyc-config-typescript",
     "all": true
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/gajus/global-agent"
-  },
-  "scripts": {
-    "build": "del-cli ./dist && tsc",
-    "lint": "eslint ./src ./test && tsc",
-    "test": "ava --verbose --serial",
-    "create-readme": "gitdown ./.README/README.md --output-file ./README.md"
-  },
-  "typings": "./dist/src/index.d.ts",
-  "version": "0.0.0-development"
+  }
 }

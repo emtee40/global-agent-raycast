@@ -13,7 +13,6 @@ const log = Logger.child({
 const KNOWN_PROPERTY_NAMES = ["HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"];
 
 export default (): ProxyController => {
-  // eslint-disable-next-line fp/no-proxy
   return new Proxy(
     {
       HTTP_PROXY: null,

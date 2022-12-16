@@ -1,1 +1,1 @@
-require("./dist/index").bootstrap();
+require("./dist/src/index").bootstrap();

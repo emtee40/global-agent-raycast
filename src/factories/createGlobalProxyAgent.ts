@@ -35,7 +35,6 @@ const defaultConfigurationInput = {
 const createConfiguration = (
   configurationInput: ProxyAgentConfigurationInputType
 ): ProxyAgentConfigurationType => {
-  // eslint-disable-next-line node/no-process-env
   const environment = process.env;
 
   const defaultConfiguration = {
@@ -70,17 +69,14 @@ export default (
 
   const proxyController = createProxyController();
 
-  // eslint-disable-next-line node/no-process-env
   proxyController.HTTP_PROXY =
     process.env[configuration.environmentVariableNamespace + "HTTP_PROXY"] ??
     null;
 
-  // eslint-disable-next-line node/no-process-env
   proxyController.HTTPS_PROXY =
     process.env[configuration.environmentVariableNamespace + "HTTPS_PROXY"] ??
     null;
 
-  // eslint-disable-next-line node/no-process-env
   proxyController.NO_PROXY =
     process.env[configuration.environmentVariableNamespace + "NO_PROXY"] ??
     null;
@@ -107,15 +103,20 @@ export default (
     };
   };
 
-  const getUrlProxy = (getProxy: () => string | null) => {
+  const getUrlProxy = (
+    getProxy: () => string | null,
+    httpOrHttps: "HTTP" | "HTTPS"
+  ) => {
     return () => {
       const proxy = getProxy();
 
       if (!proxy) {
-        throw new UnexpectedStateError("HTTP(S) proxy must be configured.");
+        throw new UnexpectedStateError(
+          `${httpOrHttps} proxy must be configured.`
+        );
       }
 
-      return parseProxyUrl(proxy);
+      return parseProxyUrl(proxy, httpOrHttps);
     };
   };
 
@@ -130,7 +131,7 @@ export default (
           return Boolean(getHttpProxy());
         },
         mustUrlUseProxy(getHttpProxy),
-        getUrlProxy(getHttpProxy),
+        getUrlProxy(getHttpProxy, "HTTP"),
         http.globalAgent,
         configuration.socketConnectionTimeout
       );
@@ -150,7 +151,7 @@ export default (
           return Boolean(getHttpsProxy());
         },
         mustUrlUseProxy(getHttpsProxy),
-        getUrlProxy(getHttpsProxy),
+        getUrlProxy(getHttpsProxy, "HTTPS"),
         https.globalAgent,
         configuration.socketConnectionTimeout
       );
