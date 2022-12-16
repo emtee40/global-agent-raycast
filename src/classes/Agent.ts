@@ -1,9 +1,7 @@
-import type * as http from 'http';
-import type * as https from 'https';
-import {
-  serializeError,
-} from 'serialize-error';
-import Logger from '../Logger';
+import type * as http from "http";
+import type * as https from "https";
+import { serializeError } from "serialize-error";
+import Logger from "../Logger";
 import type {
   AgentType,
   ConnectionCallbackType,
@@ -12,27 +10,29 @@ import type {
   IsProxyConfiguredMethodType,
   MustUrlUseProxyMethodType,
   ProtocolType,
-} from '../types';
+} from "../types";
 
 const log = Logger.child({
-  namespace: 'Agent',
+  namespace: "Agent",
 });
 
 let requestId = 0;
 
 type AgentRequestOptions = {
-  host?: string,
-  path?: string,
-  port: number,
+  host?: string;
+  path?: string;
+  port: number;
 };
 
-type HttpRequestOptions = AgentRequestOptions & Omit<http.RequestOptions, keyof AgentRequestOptions> & {
-  secureEndpoint: false,
-};
+type HttpRequestOptions = AgentRequestOptions &
+  Omit<http.RequestOptions, keyof AgentRequestOptions> & {
+    secureEndpoint: false;
+  };
 
-type HttpsRequestOptions = AgentRequestOptions & Omit<https.RequestOptions, keyof AgentRequestOptions> & {
-  secureEndpoint: true,
-};
+type HttpsRequestOptions = AgentRequestOptions &
+  Omit<https.RequestOptions, keyof AgentRequestOptions> & {
+    secureEndpoint: true;
+  };
 
 type RequestOptions = HttpRequestOptions | HttpsRequestOptions;
 
@@ -51,12 +51,12 @@ abstract class Agent {
 
   public socketConnectionTimeout: number;
 
-  public constructor (
+  public constructor(
     isProxyConfigured: IsProxyConfiguredMethodType,
     mustUrlUseProxy: MustUrlUseProxyMethodType,
     getUrlProxy: GetUrlProxyMethodType,
     fallbackAgent: AgentType,
-    socketConnectionTimeout: number,
+    socketConnectionTimeout: number
   ) {
     this.fallbackAgent = fallbackAgent;
     this.isProxyConfigured = isProxyConfigured;
@@ -65,25 +65,44 @@ abstract class Agent {
     this.socketConnectionTimeout = socketConnectionTimeout;
   }
 
-  public abstract createConnection (configuration: ConnectionConfigurationType, callback: ConnectionCallbackType): void;
+  public abstract createConnection(
+    configuration: ConnectionConfigurationType,
+    callback: ConnectionCallbackType
+  ): void;
 
-  public addRequest (request: http.ClientRequest, configuration: RequestOptions) {
+  public addRequest(
+    request: http.ClientRequest,
+    configuration: RequestOptions
+  ) {
     let requestUrl;
 
     // It is possible that addRequest was constructed for a proxied request already, e.g.
     // "request" package does this when it detects that a proxy should be used
     // https://github.com/request/request/blob/212570b6971a732b8dd9f3c73354bcdda158a737/request.js#L402
     // https://gist.github.com/gajus/e2074cd3b747864ffeaabbd530d30218
-    if (request.path.startsWith('http://') ?? request.path.startsWith('https://')) {
+    if (
+      request.path.startsWith("http://") ??
+      request.path.startsWith("https://")
+    ) {
       requestUrl = request.path;
     } else {
-      requestUrl = this.protocol + '//' + (configuration.hostname ?? configuration.host) + (configuration.port === 80 ?? configuration.port === 443 ? '' : ':' + configuration.port) + request.path;
+      requestUrl =
+        this.protocol +
+        "//" +
+        (configuration.hostname ?? configuration.host) +
+        (configuration.port === 80 ?? configuration.port === 443
+          ? ""
+          : ":" + configuration.port) +
+        request.path;
     }
 
     if (!this.isProxyConfigured()) {
-      log.trace({
-        destination: requestUrl,
-      }, 'not proxying request; GLOBAL_AGENT.HTTP_PROXY is not configured');
+      log.trace(
+        {
+          destination: requestUrl,
+        },
+        "not proxying request; GLOBAL_AGENT.HTTP_PROXY is not configured"
+      );
 
       // @ts-expect-error seems like we are using wrong type for fallbackAgent.
       this.fallbackAgent.addRequest(request, configuration);
@@ -92,9 +111,12 @@ abstract class Agent {
     }
 
     if (!this.mustUrlUseProxy(requestUrl)) {
-      log.trace({
-        destination: requestUrl,
-      }, 'not proxying request; url matches GLOBAL_AGENT.NO_PROXY');
+      log.trace(
+        {
+          destination: requestUrl,
+        },
+        "not proxying request; url matches GLOBAL_AGENT.NO_PROXY"
+      );
 
       // @ts-expect-error seems like we are using wrong type for fallbackAgent.
       this.fallbackAgent.addRequest(request, configuration);
@@ -106,38 +128,50 @@ abstract class Agent {
 
     const proxy = this.getUrlProxy(requestUrl);
 
-    if (this.protocol === 'http:') {
+    if (this.protocol === "http:") {
       request.path = requestUrl;
 
       if (proxy.authorization) {
-        request.setHeader('proxy-authorization', 'Basic ' + Buffer.from(proxy.authorization).toString('base64'));
+        request.setHeader(
+          "proxy-authorization",
+          "Basic " + Buffer.from(proxy.authorization).toString("base64")
+        );
       }
     }
 
-    log.trace({
-      destination: requestUrl,
-      proxy: 'http://' + proxy.hostname + ':' + proxy.port,
-      requestId: currentRequestId,
-    }, 'proxying request');
+    log.trace(
+      {
+        destination: requestUrl,
+        proxy: "http://" + proxy.hostname + ":" + proxy.port,
+        requestId: currentRequestId,
+      },
+      "proxying request"
+    );
 
-    request.on('error', (error: Error) => {
-      log.error({
-        error: serializeError(error),
-      }, 'request error');
+    request.on("error", (error: Error) => {
+      log.error(
+        {
+          error: serializeError(error),
+        },
+        "request error"
+      );
     });
 
-    request.once('response', (response: http.IncomingMessage) => {
-      log.trace({
-        headers: response.headers,
-        requestId: currentRequestId,
-        statusCode: response.statusCode,
-      }, 'proxying response');
+    request.once("response", (response: http.IncomingMessage) => {
+      log.trace(
+        {
+          headers: response.headers,
+          requestId: currentRequestId,
+          statusCode: response.statusCode,
+        },
+        "proxying response"
+      );
     });
 
     request.shouldKeepAlive = false;
 
     const connectionConfiguration = {
-      host: configuration.hostname ?? configuration.host ?? '',
+      host: configuration.hostname ?? configuration.host ?? "",
       port: configuration.port ?? 80,
       proxy,
       tls: {},
@@ -175,7 +209,7 @@ abstract class Agent {
       // which makes it impossible to override that value globally and respect `rejectUnauthorized` for specific requests only.
       if (
         // eslint-disable-next-line node/no-process-env
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0'
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED === "0"
       ) {
         // @ts-expect-error seems like we are using wrong guard for this change that does not align with secureEndpoint
         connectionConfiguration.tls.rejectUnauthorized = false;
@@ -183,9 +217,12 @@ abstract class Agent {
     }
 
     this.createConnection(connectionConfiguration, (error, socket) => {
-      log.trace({
-        target: connectionConfiguration,
-      }, 'connecting');
+      log.trace(
+        {
+          target: connectionConfiguration,
+        },
+        "connecting"
+      );
 
       // @see https://github.com/nodejs/node/issues/5757#issuecomment-305969057
       if (socket) {
@@ -193,32 +230,41 @@ abstract class Agent {
           socket.destroy();
         });
 
-        socket.once('connect', () => {
-          log.trace({
-            target: connectionConfiguration,
-          }, 'connected');
+        socket.once("connect", () => {
+          log.trace(
+            {
+              target: connectionConfiguration,
+            },
+            "connected"
+          );
 
           socket.setTimeout(0);
         });
 
-        socket.once('secureConnect', () => {
-          log.trace({
-            target: connectionConfiguration,
-          }, 'connected (secure)');
+        socket.once("secureConnect", () => {
+          log.trace(
+            {
+              target: connectionConfiguration,
+            },
+            "connected (secure)"
+          );
 
           socket.setTimeout(0);
         });
       }
 
       if (error) {
-        request.emit('error', error);
+        request.emit("error", error);
       } else if (socket) {
-        log.debug('created socket');
+        log.debug("created socket");
 
-        socket.on('error', (socketError: Error) => {
-          log.error({
-            error: serializeError(socketError),
-          }, 'socket error');
+        socket.on("error", (socketError: Error) => {
+          log.error(
+            {
+              error: serializeError(socketError),
+            },
+            "socket error"
+          );
         });
 
         request.onSocket(socket);

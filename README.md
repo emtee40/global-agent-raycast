@@ -8,21 +8,21 @@
 
 Global HTTP/HTTPS proxy configurable using environment variables.
 
-* [Usage](#usage)
-  * [Setup proxy using `global-agent/bootstrap`](#setup-proxy-using-global-agentbootstrap)
-  * [Setup proxy using `bootstrap` routine](#setup-proxy-using-bootstrap-routine)
-  * [Runtime configuration](#runtime-configuration)
-  * [Exclude URLs](#exclude-urls)
-  * [Enable logging](#enable-logging)
-* [API](#api)
-  * [`createGlobalProxyAgent`](#createglobalproxyagent)
-  * [Environment variables](#environment-variables)
-  * [`global.GLOBAL_AGENT`](#globalglobal_agent)
-* [Supported libraries](#supported-libraries)
-* [FAQ](#faq)
-  * [What is the reason `global-agent` overrides explicitly configured HTTP(S) agent?](#what-is-the-reason-global-agent-overrides-explicitly-configured-https-agent)
-  * [What is the reason `global-agent/bootstrap` does not use `HTTP_PROXY`?](#what-is-the-reason-global-agentbootstrap-does-not-use-http_proxy)
-  * [What is the difference from `global-tunnel` and `tunnel`?](#what-is-the-difference-from-global-tunnel-and-tunnel)
+- [Usage](#usage)
+  - [Setup proxy using `global-agent/bootstrap`](#setup-proxy-using-global-agentbootstrap)
+  - [Setup proxy using `bootstrap` routine](#setup-proxy-using-bootstrap-routine)
+  - [Runtime configuration](#runtime-configuration)
+  - [Exclude URLs](#exclude-urls)
+  - [Enable logging](#enable-logging)
+- [API](#api)
+  - [`createGlobalProxyAgent`](#createglobalproxyagent)
+  - [Environment variables](#environment-variables)
+  - [`global.GLOBAL_AGENT`](#globalglobal_agent)
+- [Supported libraries](#supported-libraries)
+- [FAQ](#faq)
+  - [What is the reason `global-agent` overrides explicitly configured HTTP(S) agent?](#what-is-the-reason-global-agent-overrides-explicitly-configured-https-agent)
+  - [What is the reason `global-agent/bootstrap` does not use `HTTP_PROXY`?](#what-is-the-reason-global-agentbootstrap-does-not-use-http_proxy)
+  - [What is the difference from `global-tunnel` and `tunnel`?](#what-is-the-difference-from-global-tunnel-and-tunnel)
 
 ## Usage
 
@@ -36,12 +36,11 @@ To configure HTTP proxy:
 Code:
 
 ```js
-import 'global-agent/bootstrap';
+import "global-agent/bootstrap";
 
 // or:
 // import {bootstrap} from 'global-agent';
 // bootstrap();
-
 ```
 
 Bash:
@@ -64,23 +63,21 @@ $ node -r 'global-agent/bootstrap' your-script.js
 Instead of importing a self-initialising script with side-effects as demonstrated in the [setup proxy using `global-agent/bootstrap`](#setup-proxy-using-global-agentbootstrap) documentation, you can import `bootstrap` routine and explicitly evaluate the bootstrap logic, e.g.
 
 ```js
-import {
-  bootstrap
-} from 'global-agent';
+import { bootstrap } from "global-agent";
 
 bootstrap();
-
 ```
 
 This is useful if you need to conditionally bootstrap `global-agent`, e.g.
 
 ```js
-import {
-  bootstrap
-} from 'global-agent';
-import globalTunnel from 'global-tunnel-ng';
+import { bootstrap } from "global-agent";
+import globalTunnel from "global-tunnel-ng";
 
-const MAJOR_NODEJS_VERSION = parseInt(process.version.slice(1).split('.')[0], 10);
+const MAJOR_NODEJS_VERSION = parseInt(
+  process.version.slice(1).split(".")[0],
+  10
+);
 
 if (MAJOR_NODEJS_VERSION >= 10) {
   // `global-agent` works with Node.js v10 and above.
@@ -89,7 +86,6 @@ if (MAJOR_NODEJS_VERSION >= 10) {
   // `global-tunnel-ng` works only with Node.js v10 and below.
   globalTunnel.initialize();
 }
-
 ```
 
 ### Setup proxy using `createGlobalProxyAgent`
@@ -97,12 +93,9 @@ if (MAJOR_NODEJS_VERSION >= 10) {
 If you do not want to use `global.GLOBAL_AGENT` variable, then you can use `createGlobalProxyAgent` to instantiate a controlled instance of `global-agent`, e.g.
 
 ```js
-import {
-  createGlobalProxyAgent
-} from 'global-agent';
+import { createGlobalProxyAgent } from "global-agent";
 
 const globalProxyAgent = createGlobalProxyAgent();
-
 ```
 
 Unlike `bootstrap` routine, `createGlobalProxyAgent` factory does not create `global.GLOBAL_AGENT` variable and does not guard against multiple initializations of `global-agent`. The result object of `createGlobalProxyAgent` is equivalent to `global.GLOBAL_AGENT`.
@@ -114,14 +107,13 @@ Unlike `bootstrap` routine, `createGlobalProxyAgent` factory does not create `gl
 You can override the `global.GLOBAL_AGENT.HTTP_PROXY` value at runtime to change proxy behaviour, e.g.
 
 ```js
-http.get('http://127.0.0.1:8000');
+http.get("http://127.0.0.1:8000");
 
-global.GLOBAL_AGENT.HTTP_PROXY = 'http://127.0.0.1:8001';
+global.GLOBAL_AGENT.HTTP_PROXY = "http://127.0.0.1:8001";
 
-http.get('http://127.0.0.1:8000');
+http.get("http://127.0.0.1:8000");
 
-global.GLOBAL_AGENT.HTTP_PROXY = 'http://127.0.0.1:8002';
-
+global.GLOBAL_AGENT.HTTP_PROXY = "http://127.0.0.1:8002";
 ```
 
 The first HTTP request is going to use http://127.0.0.1:8001 proxy and the secord request is going to use http://127.0.0.1:8002.
@@ -173,20 +165,20 @@ type ProxyAgentConfigurationInputType = {|
   +socketConnectionTimeout?: number,
 |};
 
-(configurationInput: ProxyAgentConfigurationInputType) => ProxyAgentConfigurationType;
-
+(configurationInput: ProxyAgentConfigurationInputType) =>
+  ProxyAgentConfigurationType;
 ```
 
 ### Environment variables
 
-|Name|Description|Default|
-|---|---|---|
-|`GLOBAL_AGENT_ENVIRONMENT_VARIABLE_NAMESPACE`|Defines namespace of `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` environment variables.|`GLOBAL_AGENT_`|
-|`GLOBAL_AGENT_FORCE_GLOBAL_AGENT`|Forces to use `global-agent` HTTP(S) agent even when request was explicitly constructed with another agent.|`true`|
-|`GLOBAL_AGENT_SOCKET_CONNECTION_TIMEOUT`|Destroys socket if connection is not established within the timeout.|`60000`|
-|`${NAMESPACE}HTTP_PROXY`|Sets the initial proxy controller HTTP_PROXY value.|N/A|
-|`${NAMESPACE}HTTPS_PROXY`|Sets the initial proxy controller HTTPS_PROXY value.|N/A|
-|`${NAMESPACE}NO_PROXY`|Sets the initial proxy controller NO_PROXY value.|N/A|
+| Name                                          | Description                                                                                                 | Default         |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------- |
+| `GLOBAL_AGENT_ENVIRONMENT_VARIABLE_NAMESPACE` | Defines namespace of `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` environment variables.                      | `GLOBAL_AGENT_` |
+| `GLOBAL_AGENT_FORCE_GLOBAL_AGENT`             | Forces to use `global-agent` HTTP(S) agent even when request was explicitly constructed with another agent. | `true`          |
+| `GLOBAL_AGENT_SOCKET_CONNECTION_TIMEOUT`      | Destroys socket if connection is not established within the timeout.                                        | `60000`         |
+| `${NAMESPACE}HTTP_PROXY`                      | Sets the initial proxy controller HTTP_PROXY value.                                                         | N/A             |
+| `${NAMESPACE}HTTPS_PROXY`                     | Sets the initial proxy controller HTTPS_PROXY value.                                                        | N/A             |
+| `${NAMESPACE}NO_PROXY`                        | Sets the initial proxy controller NO_PROXY value.                                                           | N/A             |
 
 ### `global.GLOBAL_AGENT`
 
@@ -194,11 +186,11 @@ type ProxyAgentConfigurationInputType = {|
 
 `global.GLOBAL_AGENT` has the following properties:
 
-|Name|Description|Configurable|
-|---|---|---|
-|`HTTP_PROXY`|Yes|Sets HTTP proxy to use.|
-|`HTTPS_PROXY`|Yes|Sets a distinct proxy to use for HTTPS requests.|
-|`NO_PROXY`|Yes|Specifies a pattern of URLs that should be excluded from proxying. See [Exclude URLs](#exclude-urls).|
+| Name          | Description | Configurable                                                                                          |
+| ------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
+| `HTTP_PROXY`  | Yes         | Sets HTTP proxy to use.                                                                               |
+| `HTTPS_PROXY` | Yes         | Sets a distinct proxy to use for HTTPS requests.                                                      |
+| `NO_PROXY`    | Yes         | Specifies a pattern of URLs that should be excluded from proxying. See [Exclude URLs](#exclude-urls). |
 
 ## Supported libraries
 
@@ -206,9 +198,9 @@ type ProxyAgentConfigurationInputType = {|
 
 `global-agent` has been tested to work with:
 
-* [`got`](https://www.npmjs.com/package/got)
-* [`axios`](https://www.npmjs.com/package/axios)
-* [`request`](https://www.npmjs.com/package/request)
+- [`got`](https://www.npmjs.com/package/got)
+- [`axios`](https://www.npmjs.com/package/axios)
+- [`request`](https://www.npmjs.com/package/request)
 
 ## FAQ
 

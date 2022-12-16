@@ -1,22 +1,22 @@
-import http from 'http';
-import https from 'https';
+import http from "http";
+import https from "https";
 
 type AgentType = http.Agent | https.Agent;
 
 export default (
   originalMethod: Function,
   agent: AgentType,
-  forceGlobalAgent: boolean,
+  forceGlobalAgent: boolean
 ) => {
   return (...args: any[]) => {
     let url;
     let options;
     let callback;
 
-    if (typeof args[0] === 'string' || args[0] instanceof URL) {
+    if (typeof args[0] === "string" || args[0] instanceof URL) {
       url = args[0];
 
-      if (typeof args[1] === 'function') {
+      if (typeof args[1] === "function") {
         options = {};
         callback = args[1];
       } else {
@@ -39,7 +39,10 @@ export default (
         options.agent = agent;
       }
 
-      if (options.agent === http.globalAgent || options.agent === https.globalAgent) {
+      if (
+        options.agent === http.globalAgent ||
+        options.agent === https.globalAgent
+      ) {
         options.agent = agent;
       }
     }

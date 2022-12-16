@@ -1,30 +1,21 @@
-import http from 'http';
-import https from 'https';
-import {
-  boolean as parseBoolean,
-} from 'boolean';
-import {
-  omitUndefined,
-} from 'omit-undefined';
-import semver from 'semver';
-import Logger from '../Logger';
-import {
-  HttpProxyAgent,
-  HttpsProxyAgent,
-} from '../classes';
-import {
-  UnexpectedStateError,
-} from '../errors';
+import http from "http";
+import https from "https";
+import { boolean as parseBoolean } from "boolean";
+import { omitUndefined } from "omit-undefined";
+import semver from "semver";
+import Logger from "../Logger";
+import { HttpProxyAgent, HttpsProxyAgent } from "../classes";
+import { UnexpectedStateError } from "../errors";
 import type {
   ProxyAgentConfigurationInputType,
   ProxyAgentConfigurationType,
-} from '../types';
+} from "../types";
 import {
   bindHttpMethod,
   isUrlMatchingNoProxy,
   parseProxyUrl,
-} from '../utilities';
-import createProxyController from './createProxyController';
+} from "../utilities";
+import createProxyController from "./createProxyController";
 
 const httpGet = http.get;
 const httpRequest = http.request;
@@ -32,7 +23,7 @@ const httpsGet = https.get;
 const httpsRequest = https.request;
 
 const log = Logger.child({
-  namespace: 'createGlobalProxyAgent',
+  namespace: "createGlobalProxyAgent",
 });
 
 const defaultConfigurationInput = {
@@ -41,14 +32,29 @@ const defaultConfigurationInput = {
   socketConnectionTimeout: 60_000,
 };
 
-const createConfiguration = (configurationInput: ProxyAgentConfigurationInputType): ProxyAgentConfigurationType => {
+const createConfiguration = (
+  configurationInput: ProxyAgentConfigurationInputType
+): ProxyAgentConfigurationType => {
   // eslint-disable-next-line node/no-process-env
   const environment = process.env;
 
   const defaultConfiguration = {
-    environmentVariableNamespace: typeof environment.GLOBAL_AGENT_ENVIRONMENT_VARIABLE_NAMESPACE === 'string' ? environment.GLOBAL_AGENT_ENVIRONMENT_VARIABLE_NAMESPACE : 'GLOBAL_AGENT_',
-    forceGlobalAgent: typeof environment.GLOBAL_AGENT_FORCE_GLOBAL_AGENT === 'string' ? parseBoolean(environment.GLOBAL_AGENT_FORCE_GLOBAL_AGENT) : true,
-    socketConnectionTimeout: typeof environment.GLOBAL_AGENT_SOCKET_CONNECTION_TIMEOUT === 'string' ? Number.parseInt(environment.GLOBAL_AGENT_SOCKET_CONNECTION_TIMEOUT, 10) : defaultConfigurationInput.socketConnectionTimeout,
+    environmentVariableNamespace:
+      typeof environment.GLOBAL_AGENT_ENVIRONMENT_VARIABLE_NAMESPACE ===
+      "string"
+        ? environment.GLOBAL_AGENT_ENVIRONMENT_VARIABLE_NAMESPACE
+        : "GLOBAL_AGENT_",
+    forceGlobalAgent:
+      typeof environment.GLOBAL_AGENT_FORCE_GLOBAL_AGENT === "string"
+        ? parseBoolean(environment.GLOBAL_AGENT_FORCE_GLOBAL_AGENT)
+        : true,
+    socketConnectionTimeout:
+      typeof environment.GLOBAL_AGENT_SOCKET_CONNECTION_TIMEOUT === "string"
+        ? Number.parseInt(
+            environment.GLOBAL_AGENT_SOCKET_CONNECTION_TIMEOUT,
+            10
+          )
+        : defaultConfigurationInput.socketConnectionTimeout,
   };
 
   return {
@@ -57,24 +63,35 @@ const createConfiguration = (configurationInput: ProxyAgentConfigurationInputTyp
   };
 };
 
-export default (configurationInput: ProxyAgentConfigurationInputType = defaultConfigurationInput) => {
+export default (
+  configurationInput: ProxyAgentConfigurationInputType = defaultConfigurationInput
+) => {
   const configuration = createConfiguration(configurationInput);
 
   const proxyController = createProxyController();
 
   // eslint-disable-next-line node/no-process-env
-  proxyController.HTTP_PROXY = process.env[configuration.environmentVariableNamespace + 'HTTP_PROXY'] ?? null;
+  proxyController.HTTP_PROXY =
+    process.env[configuration.environmentVariableNamespace + "HTTP_PROXY"] ??
+    null;
 
   // eslint-disable-next-line node/no-process-env
-  proxyController.HTTPS_PROXY = process.env[configuration.environmentVariableNamespace + 'HTTPS_PROXY'] ?? null;
+  proxyController.HTTPS_PROXY =
+    process.env[configuration.environmentVariableNamespace + "HTTPS_PROXY"] ??
+    null;
 
   // eslint-disable-next-line node/no-process-env
-  proxyController.NO_PROXY = process.env[configuration.environmentVariableNamespace + 'NO_PROXY'] ?? null;
+  proxyController.NO_PROXY =
+    process.env[configuration.environmentVariableNamespace + "NO_PROXY"] ??
+    null;
 
-  log.info({
-    configuration,
-    state: proxyController,
-  }, 'global agent has been initialized');
+  log.info(
+    {
+      configuration,
+      state: proxyController,
+    },
+    "global agent has been initialized"
+  );
 
   const mustUrlUseProxy = (getProxy: () => string | null) => {
     return (url: string): boolean => {
@@ -95,7 +112,7 @@ export default (configurationInput: ProxyAgentConfigurationInputType = defaultCo
       const proxy = getProxy();
 
       if (!proxy) {
-        throw new UnexpectedStateError('HTTP(S) proxy must be configured.');
+        throw new UnexpectedStateError("HTTP(S) proxy must be configured.");
       }
 
       return parseProxyUrl(proxy);
@@ -107,7 +124,7 @@ export default (configurationInput: ProxyAgentConfigurationInputType = defaultCo
   };
 
   const BoundHttpProxyAgent = class extends HttpProxyAgent {
-    public constructor () {
+    public constructor() {
       super(
         () => {
           return Boolean(getHttpProxy());
@@ -115,7 +132,7 @@ export default (configurationInput: ProxyAgentConfigurationInputType = defaultCo
         mustUrlUseProxy(getHttpProxy),
         getUrlProxy(getHttpProxy),
         http.globalAgent,
-        configuration.socketConnectionTimeout,
+        configuration.socketConnectionTimeout
       );
     }
   };
@@ -127,7 +144,7 @@ export default (configurationInput: ProxyAgentConfigurationInputType = defaultCo
   };
 
   const BoundHttpsProxyAgent = class extends HttpsProxyAgent {
-    public constructor () {
+    public constructor() {
       super(
         () => {
           return Boolean(getHttpsProxy());
@@ -135,7 +152,7 @@ export default (configurationInput: ProxyAgentConfigurationInputType = defaultCo
         mustUrlUseProxy(getHttpsProxy),
         getUrlProxy(getHttpsProxy),
         https.globalAgent,
-        configuration.socketConnectionTimeout,
+        configuration.socketConnectionTimeout
       );
     }
   };
@@ -144,7 +161,7 @@ export default (configurationInput: ProxyAgentConfigurationInputType = defaultCo
 
   // Overriding globalAgent was added in v11.7.
   // @see https://nodejs.org/uk/blog/release/v11.7.0/
-  if (semver.gte(process.version, 'v11.7.0')) {
+  if (semver.gte(process.version, "v11.7.0")) {
     // @see https://github.com/facebook/flow/issues/7670
     // @ts-expect-error Node.js version compatibility
     http.globalAgent = httpAgent;
@@ -161,20 +178,38 @@ export default (configurationInput: ProxyAgentConfigurationInputType = defaultCo
   //
   // We still want to override http(s).globalAgent when possible to enable logic
   // in `bindHttpMethod`.
-  if (semver.gte(process.version, 'v10.0.0')) {
-    // @ts-expect-error seems like we are using wrong type for httpAgent
-    http.get = bindHttpMethod(httpGet, httpAgent, configuration.forceGlobalAgent);
+  if (semver.gte(process.version, "v10.0.0")) {
+    http.get = bindHttpMethod(
+      httpGet,
+      // @ts-expect-error seems like we are using wrong type for httpAgent
+      httpAgent,
+      configuration.forceGlobalAgent
+    );
 
-    // @ts-expect-error seems like we are using wrong type for httpAgent
-    http.request = bindHttpMethod(httpRequest, httpAgent, configuration.forceGlobalAgent);
+    http.request = bindHttpMethod(
+      httpRequest,
+      // @ts-expect-error seems like we are using wrong type for httpAgent
+      httpAgent,
+      configuration.forceGlobalAgent
+    );
 
-    // @ts-expect-error seems like we are using wrong type for httpAgent
-    https.get = bindHttpMethod(httpsGet, httpsAgent, configuration.forceGlobalAgent);
+    https.get = bindHttpMethod(
+      httpsGet,
+      // @ts-expect-error seems like we are using wrong type for httpAgent
+      httpsAgent,
+      configuration.forceGlobalAgent
+    );
 
-    // @ts-expect-error seems like we are using wrong type for httpAgent
-    https.request = bindHttpMethod(httpsRequest, httpsAgent, configuration.forceGlobalAgent);
+    https.request = bindHttpMethod(
+      httpsRequest,
+      // @ts-expect-error seems like we are using wrong type for httpAgent
+      httpsAgent,
+      configuration.forceGlobalAgent
+    );
   } else {
-    log.warn('attempt to initialize global-agent in unsupported Node.js version was ignored');
+    log.warn(
+      "attempt to initialize global-agent in unsupported Node.js version was ignored"
+    );
   }
 
   return proxyController;

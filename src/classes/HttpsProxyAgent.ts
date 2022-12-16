@@ -1,5 +1,5 @@
-import net from 'net';
-import tls from 'tls';
+import net from "net";
+import tls from "tls";
 import type {
   AgentType,
   ConnectionCallbackType,
@@ -7,40 +7,43 @@ import type {
   GetUrlProxyMethodType,
   IsProxyConfiguredMethodType,
   MustUrlUseProxyMethodType,
-} from '../types';
-import Agent from './Agent';
+} from "../types";
+import Agent from "./Agent";
 
 class HttpsProxyAgent extends Agent {
-  public constructor (
+  public constructor(
     isProxyConfigured: IsProxyConfiguredMethodType,
     mustUrlUseProxy: MustUrlUseProxyMethodType,
     getUrlProxy: GetUrlProxyMethodType,
     fallbackAgent: AgentType,
-    socketConnectionTimeout: number,
+    socketConnectionTimeout: number
   ) {
     super(
       isProxyConfigured,
       mustUrlUseProxy,
       getUrlProxy,
       fallbackAgent,
-      socketConnectionTimeout,
+      socketConnectionTimeout
     );
 
-    this.protocol = 'https:';
+    this.protocol = "https:";
     this.defaultPort = 443;
   }
 
-  public createConnection (configuration: ConnectionConfigurationType, callback: ConnectionCallbackType) {
+  public createConnection(
+    configuration: ConnectionConfigurationType,
+    callback: ConnectionCallbackType
+  ) {
     const socket = net.connect(
       configuration.proxy.port,
-      configuration.proxy.hostname,
+      configuration.proxy.hostname
     );
 
-    socket.on('error', (error) => {
+    socket.on("error", (error) => {
       callback(error);
     });
 
-    socket.once('data', () => {
+    socket.once("data", () => {
       const secureSocket = tls.connect({
         ...configuration.tls,
         socket,
@@ -49,16 +52,25 @@ class HttpsProxyAgent extends Agent {
       callback(null, secureSocket);
     });
 
-    let connectMessage = '';
+    let connectMessage = "";
 
-    connectMessage += 'CONNECT ' + configuration.host + ':' + configuration.port + ' HTTP/1.1\r\n';
-    connectMessage += 'Host: ' + configuration.host + ':' + configuration.port + '\r\n';
+    connectMessage +=
+      "CONNECT " +
+      configuration.host +
+      ":" +
+      configuration.port +
+      " HTTP/1.1\r\n";
+    connectMessage +=
+      "Host: " + configuration.host + ":" + configuration.port + "\r\n";
 
     if (configuration.proxy.authorization) {
-      connectMessage += 'Proxy-Authorization: Basic ' + Buffer.from(configuration.proxy.authorization).toString('base64') + '\r\n';
+      connectMessage +=
+        "Proxy-Authorization: Basic " +
+        Buffer.from(configuration.proxy.authorization).toString("base64") +
+        "\r\n";
     }
 
-    connectMessage += '\r\n';
+    connectMessage += "\r\n";
 
     socket.write(connectMessage);
   }
